@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Security.Cryptography;
 using Libplanet;
 using Libplanet.Crypto;
 using Cocona;
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.Newtonsoft;
-using GraphQL.Client.Abstractions;
 using System.Threading.Tasks;
 using Libplanet.Tx;
 using Libplanet.Action;
@@ -16,8 +14,8 @@ namespace repeater
 {
     public class Program
     {
-        private static HashDigest<SHA256> genesisHash = 
-            new HashDigest<SHA256>(ByteUtil.ParseHex("4582250d0da33b06779a8475d283d5dd210c683b9b999d74d03fac4f58fa6bce"));
+        private static Libplanet.Blocks.BlockHash? genesisHash = 
+            new Libplanet.Blocks.BlockHash(ByteUtil.ParseHex("4582250d0da33b06779a8475d283d5dd210c683b9b999d74d03fac4f58fa6bce"));
         static void Main(string[] args)
         {
             CoconaLiteApp.Run<Program>(args);
@@ -48,11 +46,15 @@ namespace repeater
                 var nonce = (await gqlClient.SendQueryAsync<dynamic>(nonceRequest)).Data.nextTxNonce;
                 Console.WriteLine(nonce);
 
+                var testAction = new PolymorphicAction<ActionBase>[]
+                {
+                    new HackAndSlash()
+                };
                 var tx = Transaction<PolymorphicAction<ActionBase>>.Create(
                     (long)nonce,
                     pk,
                     genesisHash,
-                    new PolymorphicAction<ActionBase>[] { },
+                    testAction,
                     null,
                     DateTimeOffset.UtcNow
                 );

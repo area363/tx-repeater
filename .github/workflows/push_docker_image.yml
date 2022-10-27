@@ -1,0 +1,31 @@
+name: push docker image
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DOCKER_REPO: planetariumhq/tx-repeater
+
+jobs:
+  build_and_push:
+    if: github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: login
+        run: |
+          docker login \
+            --username '${{ secrets.DOCKER_USERNAME }}' \
+            --password '${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}'
+      - name: build-and-push
+        run: |
+          docker build . \
+            -f Dockerfile \
+            -t $DOCKER_REPO:git-${{ github.sha }} \
+            --build-arg COMMIT=git-${{ github.sha }}
+          docker push $DOCKER_REPO:git-${{ github.sha }}
